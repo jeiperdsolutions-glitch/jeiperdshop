@@ -5,6 +5,10 @@ on:
     # 16:00 UTC = 12:00 PM en Republica Dominicana (UTC-4)
     - cron: '0 16 * * *'
   workflow_dispatch:        # permite ejecutarlo a mano desde la pestana Actions
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'index.html'        # evita que la auto-actualizacion se dispare a si misma
 
 permissions:
   contents: write           # para poder actualizar index.html en el repo
