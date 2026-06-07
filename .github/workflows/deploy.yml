@@ -4,14 +4,15 @@ on:
   schedule:
     # 16:00 UTC = 12:00 PM en Republica Dominicana (UTC-4)
     - cron: '0 16 * * *'
-  workflow_dispatch:        # permite ejecutarlo a mano desde la pestana Actions
+  workflow_dispatch:
   push:
     branches: [main]
     paths-ignore:
-      - 'index.html'        # evita que la auto-actualizacion se dispare a si misma
+      - 'index.html'
+      - 'build.log'
 
 permissions:
-  contents: write           # para poder actualizar index.html en el repo
+  contents: write
 
 concurrency:
   group: actualizar-tienda
@@ -32,17 +33,24 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
-      - name: Extraer catalogo y generar la tienda
+      - name: Generar la tienda (con registro)
         run: |
           cd scripts
-          python extraer_portatilshop.py
-          python generar_tienda.py
-          cp JeiperdShop.html ../index.html
+          set +e
+          python extraer_portatilshop.py 2>&1 | tee ../build.log
+          EXTRAER=${PIPESTATUS[0]}
+          echo "=== extraer exit: $EXTRAER ===" | tee -a ../build.log
+          if [ "$EXTRAER" -eq 0 ]; then
+            python generar_tienda.py 2>&1 | tee -a ../build.log
+            echo "=== generar exit: ${PIPESTATUS[0]} ===" | tee -a ../build.log
+            cp JeiperdShop.html ../index.html
+          fi
 
-      - name: Publicar cambios (index.html)
+      - name: Publicar (siempre guarda el log)
+        if: always()
         run: |
           git config user.name "JeiperdShop Bot"
           git config user.email "jeiperdsolutions@gmail.com"
-          git add index.html
-          git commit -m "Actualizacion automatica del catalogo" || echo "Sin cambios que publicar"
+          git add index.html build.log
+          git commit -m "Actualizacion automatica del catalogo" || echo "Sin cambios"
           git push
