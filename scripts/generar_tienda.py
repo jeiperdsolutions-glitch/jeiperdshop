@@ -597,10 +597,13 @@ function aplicar(){
     filtrados.push(i);
   }
   if(orden==='destacados') filtrados.sort((a,b)=>{
-      const pa=PROD[a], pb=PROD[b];
-      const sa=(pa.stock&&pa.img&&pa.pv)?0:1, sb=(pb.stock&&pb.img&&pb.pv)?0:1;
-      if(sa!==sb) return sa-sb;                       // disponibles+con foto+con precio primero
-      return (pa.pv||1e12)-(pb.pv||1e12);             // luego del mas barato al mas caro
+      const pa=PROD[a], pb=PROD[b], U=2000;
+      // grupo 0 = barato (disponible, con foto, precio <= U)  | 1 = resto con precio | 2 = sin precio/foto
+      const ga=(pa.stock&&pa.img&&pa.pv)?(pa.pv<=U?0:1):2;
+      const gb=(pb.stock&&pb.img&&pb.pv)?(pb.pv<=U?0:1):2;
+      if(ga!==gb) return ga-gb;
+      if(ga===0) return (pa._r||0)-(pb._r||0);        // baratos: ALEATORIO (se fija al cargar)
+      return (pa.pv||1e12)-(pb.pv||1e12);             // resto: del mas barato al mas caro
     });
   else if(orden==='pasc') filtrados.sort((a,b)=>(PROD[a].pv||1e12)-(PROD[b].pv||1e12));
   else if(orden==='pdesc') filtrados.sort((a,b)=>(PROD[b].pv||0)-(PROD[a].pv||0));
@@ -828,6 +831,7 @@ async function hacerLogin(){
 document.getElementById('q').addEventListener('keydown',e=>{ if(e.key==='Enter') aplicar(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ cerrarModal(); cerrarCarrito(); cerrarAuth(); } });
 if(!CFG.instagram){ document.getElementById('ig_li').style.display='none'; }
+PROD.forEach(p=>{ p._r=Math.random(); });   // orden aleatorio (nuevo en cada visita) para los baratos
 cargarEstado(); chips(); llenarMarcas(); initBanner(); aplicar(); refrescaCarrito(); initCuenta();
 document.getElementById('favnum').textContent=favs.size;
 </script>
