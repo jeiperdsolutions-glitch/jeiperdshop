@@ -7,20 +7,15 @@ on:
   workflow_dispatch:        # permite ejecutarlo a mano desde la pestana Actions
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write           # para poder actualizar index.html en el repo
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: actualizar-tienda
+  cancel-in-progress: false
 
 jobs:
-  build-deploy:
+  actualizar:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Descargar el repositorio
         uses: actions/checkout@v4
@@ -38,17 +33,12 @@ jobs:
           cd scripts
           python extraer_portatilshop.py
           python generar_tienda.py
-          mkdir -p ../site
-          cp JeiperdShop.html ../site/index.html
+          cp JeiperdShop.html ../index.html
 
-      - name: Configurar Pages
-        uses: actions/configure-pages@v5
-
-      - name: Subir el sitio
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
-      - name: Publicar en GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publicar cambios (index.html)
+        run: |
+          git config user.name "JeiperdShop Bot"
+          git config user.email "jeiperdsolutions@gmail.com"
+          git add index.html
+          git commit -m "Actualizacion automatica del catalogo" || echo "Sin cambios que publicar"
+          git push
