@@ -158,7 +158,7 @@ HTML = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0A4D8C">
-<title>JeiperdShop - Tecnologia a los mejores precios en RD</title>
+<title>JeiperdStore - De todo y para todos | RD</title>
 <style>
   :root{
     --primario:#0A4D8C; --primario2:#0c5ba8; --acento:#00B4D8; --acento2:#02d1f7; --oscuro:#0B1F33;
@@ -402,7 +402,7 @@ HTML = r"""<!DOCTYPE html>
   <header><div class="hrow">
     <div class="logo"><span class="dot"></span>__MARCA__<span>__MARCA2__</span></div>
     <div class="buscador">
-      <input id="q" type="text" placeholder="Buscar laptops, celulares, accesorios...">
+      <input id="q" type="text" placeholder="Buscar productos...">
       <button onclick="aplicar()">Buscar</button>
     </div>
     <button class="iconbtn" id="favbtn" onclick="toggleVerFavs()" title="Mis favoritos">&#10084; <span class="num" id="favnum">0</span></button>
@@ -415,8 +415,8 @@ HTML = r"""<!DOCTYPE html>
 
   <div class="wrap">
     <div class="hero"><div class="hero-in">
-      <h1>Tecnologia al mejor precio &#128640;</h1>
-      <p>Mas de __TOTAL__ productos: laptops, celulares y accesorios con envio a todo el pais y atencion por WhatsApp.</p>
+      <h1>De todo y para todos &#128717;</h1>
+      <p>Mas de __TOTAL__ productos: tecnologia, hogar, belleza, accesorios y mucho mas, con envio a todo el pais y atencion por WhatsApp.</p>
     </div></div>
 
     <div class="feats">
@@ -504,7 +504,7 @@ HTML = r"""<!DOCTYPE html>
     <div class="wrap fgrid">
       <div>
         <div class="ft-logo">__MARCA__<span>__MARCA2__</span></div>
-        <p>Tu tienda de tecnologia en __PAIS__. Productos nuevos con garantia y envio a todo el pais.</p>
+        <p>Tu tienda de todo en __PAIS__. De todo y para todos, con envio a todo el pais.</p>
         <div class="pay"><span>Transferencia bancaria</span><span>Tarjeta credito/debito</span><span>WhatsApp</span></div>
       </div>
       <div>
