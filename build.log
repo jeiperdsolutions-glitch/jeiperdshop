@@ -1,4 +1,9 @@
+Abriendo la web para resolver Cloudflare...
+Titulo final: 'Un momento…' (reto resuelto: False)
+API status dentro del navegador: 403
+Guardadas 0 cookies en cf_cookies.json
 Descargando catalogo de portatilshoprd.com ...
+  (Cloudflare: cargadas 0 cookies del navegador)
   ! pagina 1 devolvio 403, reintentando...
 Cloudflare bloqueo la peticion (HTTP 403). Primeros 200 chars: '<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam'
 === extraer exit: 1 ===
