@@ -33,14 +33,16 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
-      - name: Instalar navegador (Playwright Chromium)
-        run: python -m playwright install --with-deps chromium
+      - name: Instalar navegador (Playwright Chromium) + xvfb
+        run: |
+          python -m playwright install --with-deps chromium
+          sudo apt-get update && sudo apt-get install -y xvfb
 
       - name: Generar la tienda (con registro)
         run: |
           cd scripts
           set +e
-          python solve_cloudflare.py 2>&1 | tee ../build.log
+          xvfb-run -a python solve_cloudflare.py 2>&1 | tee ../build.log
           python extraer_portatilshop.py 2>&1 | tee -a ../build.log
           EXTRAER=${PIPESTATUS[0]}
           echo "=== extraer exit: $EXTRAER ===" | tee -a ../build.log
