@@ -724,11 +724,19 @@ function _msgPedido(plano){
   return plano?m:m.split(' ').join('%20');
 }
 
+function _linkPedido(){
+  const items=Object.keys(cart).map(i=>[PROD[i].sku, cart[i], PROD[i].pv||0]);
+  const o={i:items, c: usuario?{n:usuario.nombre||'',t:usuario.telefono||'',d:usuario.direccion||''}:{}};
+  let b=btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const dir=location.origin+location.pathname.replace(/[^/]*$/,'');
+  return dir+'pedido.html#d='+b;
+}
 function checkout(){
   const keys=Object.keys(cart);
   if(keys.length===0){ toast('Tu carrito esta vacio'); return; }
-  // Abre WhatsApp DIRECTO con el pedido (lista de productos, total y datos del cliente)
-  window.open('https://wa.me/'+CFG.whatsapp+'?text='+encodeURIComponent(_msgPedido(true)),'_blank');
+  // WhatsApp directo con el pedido + LINK para ver la cotizacion con fotos
+  const m=_msgPedido(true)+'\n\n📄 Ver pedido con fotos: '+_linkPedido();
+  window.open('https://wa.me/'+CFG.whatsapp+'?text='+encodeURIComponent(m),'_blank');
 }
 function compartir(i){ const p=PROD[i], txt=p.n+' - '+money(p.pv)+' en '+CFG.marca+CFG.marca2;
   if(navigator.share){ navigator.share({title:CFG.marca+CFG.marca2,text:txt}).catch(()=>{}); }

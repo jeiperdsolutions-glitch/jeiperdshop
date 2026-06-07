@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedido - JeiperdStore</title>
+<style>
+  :root{--navy:#0B1F33;--prim:#0A4D8C;--cyan:#00B4D8;--cyan2:#02d1f7;--gris:#6b7c8f;--borde:#e2e9f1}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Roboto,Arial,sans-serif}
+  body{background:#eef3f8;color:#16263a;padding:16px}
+  .doc{max-width:780px;margin:auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 8px 30px rgba(11,31,51,.15)}
+  .top{background:var(--navy);color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px}
+  .logo{font-size:26px;font-weight:800}.logo span{color:var(--cyan2)}
+  .top .r{text-align:right}.top .r b{font-size:18px;letter-spacing:1px}
+  .top .r small{display:block;color:#cfe3f5;font-size:12px;margin-top:4px}
+  .cli{padding:14px 24px;background:#f6f9fc;border-bottom:1px solid var(--borde);font-size:14px;line-height:1.6}
+  .cli b{color:var(--prim)}
+  .item{display:flex;gap:14px;align-items:center;padding:14px 24px;border-bottom:1px solid var(--borde)}
+  .item img{width:66px;height:66px;object-fit:contain;background:#fff;border:1px solid var(--borde);border-radius:8px;flex-shrink:0}
+  .item .n{flex:1;font-size:14px;line-height:1.35}
+  .item .q{font-size:13px;color:var(--gris);margin-top:3px}
+  .item .s{font-weight:800;color:var(--prim);white-space:nowrap;font-size:15px}
+  .tot{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;background:#fff}
+  .tot .l{font-size:20px;font-weight:800}.tot .v{font-size:24px;font-weight:800;color:var(--prim)}
+  .nota{padding:0 24px 16px;color:var(--gris);font-size:12px}
+  .foot{background:var(--navy);color:#cfe3f5;text-align:center;padding:12px;font-size:13px}
+  .foot span{color:var(--cyan2)}
+  .acc{max-width:780px;margin:14px auto;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .acc button,.acc a{background:var(--prim);color:#fff;border:0;border-radius:10px;padding:12px 20px;font-weight:700;cursor:pointer;font-size:14px;text-decoration:none}
+  .acc .sec{background:#fff;color:var(--prim);border:1px solid var(--borde)}
+  .vacio{padding:50px 24px;text-align:center;color:var(--gris)}
+  @media print{ body{background:#fff;padding:0} .acc{display:none} .doc{box-shadow:none} }
+</style>
+</head>
+<body>
+  <div class="doc" id="doc"><div class="vacio">Cargando pedido…</div></div>
+  <div class="acc">
+    <button onclick="window.print()">📄 Guardar como PDF</button>
+    <a class="sec" href="./">Ir a la tienda</a>
+  </div>
+<script>
+function money(v){ return 'RD$ '+Number(v||0).toLocaleString('es-DO'); }
+function parseCSV(t){
+  const rows=[]; let i=0,f='',row=[],q=false;
+  while(i<t.length){ const c=t[i];
+    if(q){ if(c=='"'){ if(t[i+1]=='"'){f+='"';i++;} else q=false; } else f+=c; }
+    else { if(c=='"') q=true; else if(c==','){ row.push(f); f=''; }
+      else if(c=='\n'){ row.push(f); rows.push(row); row=[]; f=''; }
+      else if(c!='\r') f+=c; }
+    i++; }
+  if(f.length||row.length){ row.push(f); rows.push(row); }
+  return rows;
+}
+function decodif(){
+  const m=location.hash.match(/d=([^&]+)/); if(!m) return null;
+  let b=decodeURIComponent(m[1]).replace(/-/g,'+').replace(/_/g,'/'); while(b.length%4)b+='=';
+  try{ return JSON.parse(decodeURIComponent(escape(atob(b)))); }catch(e){ return null; }
+}
+async function render(){
+  const o=decodif();
+  const doc=document.getElementById('doc');
+  if(!o || !o.i || !o.i.length){ doc.innerHTML='<div class="vacio">No se pudo leer el pedido.</div>'; return; }
+  // catalogo (para nombre + foto) desde el feed publico
+  let cat={};
+  try{
+    const txt=await (await fetch('feed_meta.csv',{cache:'no-store'})).text();
+    const rows=parseCSV(txt); const H={}; rows[0].forEach((h,k)=>H[h.trim()]=k);
+    for(let r=1;r<rows.length;r++){ const id=rows[r][H['id']]; if(id) cat[id]={t:rows[r][H['title']],img:rows[r][H['image_link']]}; }
+  }catch(e){}
+  const fecha=new Date().toLocaleDateString('es-DO');
+  const folio='JS-'+location.hash.replace(/\W/g,'').slice(-6).toUpperCase();
+  let total=0, filas='';
+  o.i.forEach(it=>{ const sku=it[0], qty=it[1], pv=it[2]; const info=cat[sku]||{};
+    const sub=qty*pv; total+=sub;
+    const img=info.img?('<img src="'+info.img+'" alt="">'):'<div style="width:66px;height:66px;background:#f0f4f8;border-radius:8px"></div>';
+    filas+='<div class="item">'+img+'<div class="n">'+(info.t||sku)+'<div class="q">Cantidad: '+qty+'  ×  '+money(pv)+'</div></div><div class="s">'+money(sub)+'</div></div>';
+  });
+  const c=o.c||{};
+  const cli='<b>Cliente:</b> '+(c.n||'(sin nombre)')+' &nbsp; <b>Tel:</b> '+(c.t||'-')+'<br><b>Dirección/zona:</b> '+(c.d||'-');
+  doc.innerHTML=
+    '<div class="top"><div class="logo">Jeiperd<span>Store</span></div>'+
+      '<div class="r"><b>PEDIDO</b><small>Fecha: '+fecha+'</small><small>Folio: '+folio+'</small></div></div>'+
+    '<div class="cli">'+cli+'</div>'+ filas +
+    '<div class="tot"><span class="l">TOTAL</span><span class="v">'+money(total)+'</span></div>'+
+    '<div class="nota">* El envío (RD$200–350) se suma según la zona. Pago: transferencia o tarjeta.</div>'+
+    '<div class="foot">Jeiperd<span>Store</span> · De todo y para todos</div>';
+  document.title='Pedido '+folio+' - JeiperdStore';
+}
+render();
+</script>
+</body>
+</html>
