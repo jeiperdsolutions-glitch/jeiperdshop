@@ -1,0 +1,54 @@
+name: Actualizar y publicar tienda JeiperdShop
+
+on:
+  schedule:
+    # 16:00 UTC = 12:00 PM en Republica Dominicana (UTC-4)
+    - cron: '0 16 * * *'
+  workflow_dispatch:        # permite ejecutarlo a mano desde la pestana Actions
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Extraer catalogo y generar la tienda
+        run: |
+          cd scripts
+          python extraer_portatilshop.py
+          python generar_tienda.py
+          mkdir -p ../site
+          cp JeiperdShop.html ../site/index.html
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir el sitio
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Publicar en GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
