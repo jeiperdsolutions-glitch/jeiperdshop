@@ -444,10 +444,11 @@ HTML = r"""<!DOCTYPE html>
     <div class="toolbar">
       <div class="cnt" id="contador"></div>
       <select id="orden" onchange="aplicar()">
-        <option value="rel">Ordenar: relevancia</option>
+        <option value="destacados">Destacados (precios bajos primero)</option>
         <option value="pasc">Precio: menor a mayor</option>
         <option value="pdesc">Precio: mayor a menor</option>
         <option value="desc">Mayor descuento</option>
+        <option value="rel">Orden original</option>
       </select>
     </div>
 
@@ -595,7 +596,13 @@ function aplicar(){
     const pv=p.pv||0; if(pv<fmin || pv>fmax) continue;
     filtrados.push(i);
   }
-  if(orden==='pasc') filtrados.sort((a,b)=>(PROD[a].pv||1e12)-(PROD[b].pv||1e12));
+  if(orden==='destacados') filtrados.sort((a,b)=>{
+      const pa=PROD[a], pb=PROD[b];
+      const sa=(pa.stock&&pa.img&&pa.pv)?0:1, sb=(pb.stock&&pb.img&&pb.pv)?0:1;
+      if(sa!==sb) return sa-sb;                       // disponibles+con foto+con precio primero
+      return (pa.pv||1e12)-(pb.pv||1e12);             // luego del mas barato al mas caro
+    });
+  else if(orden==='pasc') filtrados.sort((a,b)=>(PROD[a].pv||1e12)-(PROD[b].pv||1e12));
   else if(orden==='pdesc') filtrados.sort((a,b)=>(PROD[b].pv||0)-(PROD[a].pv||0));
   else if(orden==='desc') filtrados.sort((a,b)=>(parseInt(PROD[b].d)||0)-(parseInt(PROD[a].d)||0));
   pagina=0; document.getElementById('grid').innerHTML=''; render();
@@ -604,7 +611,7 @@ function limpiar(){
   document.getElementById('q').value=''; document.getElementById('fmarca').value='';
   document.getElementById('fmin').value=''; document.getElementById('fmax').value='';
   document.getElementById('fof').checked=false; document.getElementById('fstk').checked=false;
-  document.getElementById('orden').value='rel'; catActiva=null; verFavs=false;
+  document.getElementById('orden').value='destacados'; catActiva=null; verFavs=false;
   document.getElementById('favbtn').classList.remove('on');
   document.querySelectorAll('.chip').forEach((x,i)=>x.classList.toggle('activo',i===0));
   aplicar();
