@@ -1,9 +1,39 @@
-Abriendo la web para resolver Cloudflare...
-Titulo final: 'Un momento…' (reto resuelto: False)
-API status dentro del navegador: 403
-Guardadas 0 cookies en cf_cookies.json
+Abriendo la web (headed + stealth) para resolver Cloudflare...
+  intento 0: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 1: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 2: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 3: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 4: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 5: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 6: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 7: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 8: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 9: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 10: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 11: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 12: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 13: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 14: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 15: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 16: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 17: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 18: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 19: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 20: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 21: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 22: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 23: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 24: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 25: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 26: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 27: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 28: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+  intento 29: titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias' api=403
+Resultado final: reto_resuelto=False api_status=403 titulo='Portátil Shop | Soluciones Tecnológicas | Últimas Tendencias'
+Guardadas 18 cookies en cf_cookies.json
+  cookie relevante: cf_clearance
 Descargando catalogo de portatilshoprd.com ...
-  (Cloudflare: cargadas 0 cookies del navegador)
+  (Cloudflare: cargadas 18 cookies del navegador)
   ! pagina 1 devolvio 403, reintentando...
 Cloudflare bloqueo la peticion (HTTP 403). Primeros 200 chars: '<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta nam'
 === extraer exit: 1 ===
