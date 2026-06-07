@@ -101,6 +101,17 @@ def bajar_todos():
     sesion = requests.Session()
     sesion.headers.update(HEADERS)
     uso_cf = _cargar_cookies_cf(sesion)
+    # Si el navegador (solve_cloudflare.py) ya bajo el catalogo, usarlo directo
+    import json as _json
+    ruta_cat = os.path.join(CARPETA, "catalogo_navegador.json")
+    if os.path.exists(ruta_cat):
+        try:
+            productos = _json.load(open(ruta_cat, encoding="utf-8"))
+            if productos:
+                print(f"  (catalogo desde navegador: {len(productos)} productos)")
+                return productos, sesion
+        except Exception as e:
+            print(f"  (no pude leer catalogo_navegador.json: {e})")
     # Si no hay cookies de navegador, "primar" visitando la web (sirve desde IP residencial)
     if not uso_cf:
         try:
