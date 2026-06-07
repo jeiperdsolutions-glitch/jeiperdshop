@@ -81,3 +81,17 @@ def precio_nice(x):
     if x < 10000:
         return int(round(x / 50.0) * 50)
     return int(round(x / 100.0) * 100)
+
+
+# Tope de ganancia por producto (RD$). El usuario lo fijo en 500.
+GANANCIA_MAX = 500
+
+
+def precio_venta(costo, cats, nombre):
+    """Precio de venta final = costo + ganancia, donde la ganancia es el margen
+    por tipo PERO con un TOPE de GANANCIA_MAX pesos por producto."""
+    if costo is None:
+        return None
+    m = margen(costo, cats, nombre)
+    ganancia = min(costo * m, GANANCIA_MAX)
+    return precio_nice(costo + ganancia)

@@ -20,19 +20,22 @@ import base64
 import datetime
 from openpyxl import load_workbook
 from PIL import Image
-from margen_util import margen, precio_nice  # logica de margenes compartida
+from margen_util import precio_venta  # precio = costo + margen (con tope de ganancia)
 
 CARPETA = os.path.dirname(os.path.abspath(__file__))
 
 # ============================ CONFIG NEGOCIO ============================
 CFG = {
-    "marca": "Jeiperd",          # se renderiza Jeiperd + Shop (Shop en color acento)
-    "marca2": "Shop",
+    "marca": "Jeiperd",          # se renderiza Jeiperd + Store (Store en color acento) = JeiperdStore
+    "marca2": "Store",
     "email": "jeiperdsolutions@gmail.com",
     "whatsapp": "18097925406",    # +1 809 792 5406 (confirmado por el usuario, de config.py)
     "whatsapp_show": "+1 809 792 5406",
     "instagram": "jeiperdshop",   # @jeiperdshop (sin confirmar; deja "" si no aplica)
     "pais": "Republica Dominicana",
+    # URL del Apps Script (/exec) para registro/login en la Hoja de Google.
+    # Mientras este vacio, el boton de Cuenta no aparece.
+    "api_url": "https://script.google.com/macros/s/AKfycby0auJwANFQiJte829page21NJsE78WFYgRXPfpgsSBELi5yBYvRib4jOEZ-5kv-Qw/exec",
 }
 
 # ============================ MINIATURAS ============================
@@ -109,13 +112,13 @@ for n, f in enumerate(filas[1:], 1):
     pv = pa = None
     d = ""
     if base is not None:
-        m = margen(base, cats, nombre_p)
-        suma_margen += m
+        pv = precio_venta(base, cats, nombre_p)        # costo + margen, ganancia tope RD$500
         n_con_precio += 1
-        hist[round(m * 100)] = hist.get(round(m * 100), 0) + 1
-        pv = precio_nice(base * (1 + m))
+        mef = (pv - base) / base if base else 0
+        suma_margen += mef
+        hist[round(mef * 100)] = hist.get(round(mef * 100), 0) + 1
         if on_sale and base_reg and base_reg > base:
-            pa = precio_nice(base_reg * (1 + m))
+            pa = precio_venta(base_reg, cats, nombre_p)
             if pa and pv and pa > pv:
                 d = str(round((1 - pv / pa) * 100)) + "%"
 
@@ -334,6 +337,26 @@ HTML = r"""<!DOCTYPE html>
          opacity:0;pointer-events:none;transition:.25s;box-shadow:0 8px 24px rgba(0,0,0,.35)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+  /* registro / login */
+  .authbox{position:fixed;z-index:95;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,94vw);
+           background:var(--card);color:var(--texto);border-radius:16px;display:none;padding:24px 22px 18px;
+           box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .authbox.open{display:block}
+  .authx{position:absolute;top:10px;right:12px;background:none;border:0;font-size:26px;color:var(--gris);cursor:pointer}
+  .authhead{font-size:22px;font-weight:800;display:flex;align-items:center;gap:7px;justify-content:center;margin-bottom:14px}
+  .authhead .dot{width:9px;height:9px;border-radius:50%;background:var(--acento)}
+  .authhead span{color:var(--acento)}
+  .authtabs{display:flex;gap:8px;margin-bottom:14px}
+  .authtab{flex:1;padding:10px;border:1px solid var(--borde);background:var(--fondo);color:var(--texto);
+           border-radius:9px;cursor:pointer;font-weight:700;font-size:14px}
+  .authtab.activo{background:var(--primario);color:#fff;border-color:var(--primario)}
+  .authform{display:flex;flex-direction:column;gap:10px}
+  .authform input{padding:12px;border:1px solid var(--borde);border-radius:9px;font-size:16px;background:var(--fondo);color:var(--texto)}
+  .authform .btn{margin-top:4px}
+  .authmsg{font-size:13px;min-height:16px;text-align:center}
+  .authmsg.err{color:#e05555}.authmsg.ok{color:#16a34a}
+  .authnota{font-size:11.5px;color:var(--gris);text-align:center;margin-top:12px}
+
   footer{background:var(--oscuro);color:#aebfd0;margin-top:20px}
   .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:26px;padding:38px 18px 8px}
   footer h4{color:#fff;font-size:15px;margin-bottom:12px}
@@ -384,6 +407,7 @@ HTML = r"""<!DOCTYPE html>
     </div>
     <button class="iconbtn" id="favbtn" onclick="toggleVerFavs()" title="Mis favoritos">&#10084; <span class="num" id="favnum">0</span></button>
     <button class="iconbtn" id="darkbtn" onclick="toggleDark()" title="Modo oscuro">&#127769;</button>
+    <button class="iconbtn" id="cuentabtn" onclick="clicCuenta()" title="Mi cuenta" style="display:none">&#128100; <span id="cuentatxt">Cuenta</span></button>
     <div class="cartbtn" onclick="abrirCarrito()">&#128722; <span class="num" id="cartnum">0</span></div>
   </div></header>
 
@@ -433,6 +457,33 @@ HTML = r"""<!DOCTYPE html>
 
   <div class="overlay" id="overlay" onclick="cerrarModal()"></div>
   <div class="modal" id="modal"></div>
+
+  <!-- registro / login -->
+  <div class="overlay" id="authoverlay" onclick="cerrarAuth()"></div>
+  <div class="authbox" id="authbox">
+    <button class="authx" onclick="cerrarAuth()">&times;</button>
+    <div class="authhead"><span class="dot"></span>__MARCA__<span>__MARCA2__</span></div>
+    <div class="authtabs">
+      <button id="tab-login" class="authtab activo" onclick="authTab('login')">Iniciar sesion</button>
+      <button id="tab-reg" class="authtab" onclick="authTab('reg')">Registrarse</button>
+    </div>
+    <div id="form-login" class="authform">
+      <input id="li-correo" type="email" placeholder="Correo" autocomplete="email">
+      <input id="li-clave" type="password" placeholder="Contrasena" autocomplete="current-password">
+      <button class="btn" onclick="hacerLogin()">Entrar</button>
+      <div class="authmsg" id="li-msg"></div>
+    </div>
+    <div id="form-reg" class="authform" style="display:none">
+      <input id="rg-nombre" type="text" placeholder="Nombre completo">
+      <input id="rg-correo" type="email" placeholder="Correo" autocomplete="email">
+      <input id="rg-tel" type="tel" placeholder="Telefono / WhatsApp">
+      <input id="rg-dir" type="text" placeholder="Direccion / zona de entrega">
+      <input id="rg-clave" type="password" placeholder="Crea una contrasena" autocomplete="new-password">
+      <button class="btn" onclick="hacerRegistro()">Crear cuenta</button>
+      <div class="authmsg" id="rg-msg"></div>
+    </div>
+    <p class="authnota">Tus datos se guardan para agilizar tus pedidos. La contrasena se guarda cifrada.</p>
+  </div>
 
   <div class="drawer" id="drawer">
     <div class="dhead"><h3>&#128722; Tu carrito</h3><button class="x" onclick="cerrarCarrito()">&times;</button></div>
@@ -657,7 +708,10 @@ function checkout(){ const keys=Object.keys(cart);
   if(keys.length===0){ toast('Tu carrito esta vacio'); return; }
   let msg='Hola '+CFG.marca+CFG.marca2+', quiero hacer este pedido:%0A%0A';
   keys.forEach(i=>{ const p=PROD[i]; msg+='- '+p.n+' (x'+cart[i]+') = '+money((p.pv||0)*cart[i])+'%0A'; });
-  msg+='%0ATotal productos: '+money(totalCart())+'%0A(El envio se suma segun mi zona)%0A%0AMi nombre: %0AMi direccion/zona: ';
+  const _n = usuario ? encodeURIComponent(usuario.nombre||'') : '';
+  const _d = usuario ? encodeURIComponent(usuario.direccion||'') : '';
+  const _t = usuario ? encodeURIComponent(usuario.telefono||'') : '';
+  msg+='%0ATotal productos: '+money(totalCart())+'%0A(El envio se suma segun mi zona)%0A%0AMi nombre: '+_n+'%0AMi telefono: '+_t+'%0AMi direccion/zona: '+_d;
   window.open('https://wa.me/'+CFG.whatsapp+'?text='+msg,'_blank'); }
 function compartir(i){ const p=PROD[i], txt=p.n+' - '+money(p.pv)+' en '+CFG.marca+CFG.marca2;
   if(navigator.share){ navigator.share({title:CFG.marca+CFG.marca2,text:txt}).catch(()=>{}); }
@@ -683,11 +737,84 @@ function goSlide(k){ bidx=k; document.getElementById('slides').style.transform='
 function sincDark(){ document.getElementById('darkbtn').innerHTML = document.body.classList.contains('dark') ? '&#9728;' : '&#127769;'; }
 function toggleDark(){ document.body.classList.toggle('dark'); save('jp_dark',document.body.classList.contains('dark')); sincDark(); }
 
+/* ---------- cuenta: registro / login (Hoja de Google via Apps Script) ---------- */
+let usuario = null;
+async function sha256(txt){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function initCuenta(){
+  if(!CFG.api_url) return;                       // sin backend configurado, no mostrar
+  document.getElementById('cuentabtn').style.display='';
+  usuario = load('jp_user', null);
+  pintarCuenta();
+}
+function pintarCuenta(){
+  document.getElementById('cuentatxt').textContent = usuario ? (String(usuario.nombre||'Cuenta').split(' ')[0]) : 'Cuenta';
+}
+function clicCuenta(){ usuario ? menuCuenta() : abrirAuth(); }
+function abrirAuth(){ document.getElementById('authoverlay').classList.add('open'); document.getElementById('authbox').classList.add('open'); }
+function cerrarAuth(){ document.getElementById('authoverlay').classList.remove('open'); document.getElementById('authbox').classList.remove('open'); }
+function authTab(cual){
+  document.getElementById('tab-login').classList.toggle('activo',cual==='login');
+  document.getElementById('tab-reg').classList.toggle('activo',cual==='reg');
+  document.getElementById('form-login').style.display = cual==='login'?'flex':'none';
+  document.getElementById('form-reg').style.display = cual==='reg'?'flex':'none';
+}
+function menuCuenta(){
+  if(confirm('Sesion de '+(usuario.nombre||usuario.correo)+'.\n\nAceptar = cerrar sesion.')){
+    usuario=null; save('jp_user',null); pintarCuenta(); toast('Sesion cerrada');
+  }
+}
+function jsonp(url){
+  return new Promise((resolve,reject)=>{
+    const cb='jpcb_'+Math.random().toString(36).slice(2);
+    const s=document.createElement('script');
+    window[cb]=(data)=>{ resolve(data); try{delete window[cb];}catch(e){} s.remove(); };
+    s.onerror=()=>{ reject(new Error('red')); s.remove(); };
+    s.src=url+(url.includes('?')?'&':'?')+'callback='+cb;
+    document.body.appendChild(s);
+    setTimeout(()=>{ if(window[cb]){ try{delete window[cb];}catch(e){} s.remove(); reject(new Error('timeout')); } },12000);
+  });
+}
+async function hacerRegistro(){
+  const m=document.getElementById('rg-msg'); m.className='authmsg'; m.textContent='Guardando...';
+  const nombre=document.getElementById('rg-nombre').value.trim();
+  const correo=document.getElementById('rg-correo').value.trim();
+  const tel=document.getElementById('rg-tel').value.trim();
+  const dir=document.getElementById('rg-dir').value.trim();
+  const clave=document.getElementById('rg-clave').value;
+  if(!nombre||!correo||!clave){ m.className='authmsg err'; m.textContent='Completa nombre, correo y contrasena.'; return; }
+  const hash=await sha256(clave);
+  try{
+    await fetch(CFG.api_url,{method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({nombre,correo,telefono:tel,direccion:dir,clave:hash})});
+    usuario={nombre,correo,telefono:tel,direccion:dir}; save('jp_user',usuario); pintarCuenta();
+    m.className='authmsg ok'; m.textContent='Cuenta creada. Bienvenido, '+nombre.split(' ')[0]+'!';
+    toast('Cuenta creada'); setTimeout(cerrarAuth,1300);
+  }catch(e){ m.className='authmsg err'; m.textContent='No se pudo registrar. Intenta luego.'; }
+}
+async function hacerLogin(){
+  const m=document.getElementById('li-msg'); m.className='authmsg'; m.textContent='Entrando...';
+  const correo=document.getElementById('li-correo').value.trim();
+  const clave=document.getElementById('li-clave').value;
+  if(!correo||!clave){ m.className='authmsg err'; m.textContent='Escribe correo y contrasena.'; return; }
+  const hash=await sha256(clave);
+  try{
+    const r=await jsonp(CFG.api_url+'?action=login&correo='+encodeURIComponent(correo)+'&clave='+hash);
+    if(r&&r.ok){ usuario=r.user; save('jp_user',usuario); pintarCuenta();
+      m.className='authmsg ok'; m.textContent='Hola, '+String(usuario.nombre||'').split(' ')[0]+'!';
+      toast('Sesion iniciada'); setTimeout(cerrarAuth,1000); }
+    else { m.className='authmsg err'; m.textContent=(r&&r.error)||'No se pudo entrar.'; }
+  }catch(e){ m.className='authmsg err'; m.textContent='No se pudo conectar al servidor.'; }
+}
+
 /* ---------- init ---------- */
 document.getElementById('q').addEventListener('keydown',e=>{ if(e.key==='Enter') aplicar(); });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ cerrarModal(); cerrarCarrito(); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ cerrarModal(); cerrarCarrito(); cerrarAuth(); } });
 if(!CFG.instagram){ document.getElementById('ig_li').style.display='none'; }
-cargarEstado(); chips(); llenarMarcas(); initBanner(); aplicar(); refrescaCarrito();
+cargarEstado(); chips(); llenarMarcas(); initBanner(); aplicar(); refrescaCarrito(); initCuenta();
 document.getElementById('favnum').textContent=favs.size;
 </script>
 </body>
