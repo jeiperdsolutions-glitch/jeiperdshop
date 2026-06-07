@@ -711,15 +711,73 @@ function flash(){ const b=document.getElementById('cartnum'); b.style.transform=
 function comprarYa(i){ const q=+document.getElementById('mq').value, p=PROD[i];
   const msg='Hola '+CFG.marca+CFG.marca2+', quiero comprar:%0A%0A- '+p.n+' (x'+q+') = '+money((p.pv||0)*q)+'%0A%0ATotal: '+money((p.pv||0)*q)+'%0A%0AMi zona de entrega es: ';
   window.open('https://wa.me/'+CFG.whatsapp+'?text='+msg,'_blank'); }
-function checkout(){ const keys=Object.keys(cart);
+/* ---- cotizacion con fotos (imagen) ---- */
+function _loadImg(src){ return new Promise(r=>{ const im=new Image(); im.onload=()=>r(im); im.onerror=()=>r(null); im.src=src; }); }
+function _contain(c,im,x,y,w,h){ const r=Math.min(w/im.width,h/im.height); const dw=im.width*r,dh=im.height*r; c.drawImage(im,x+(w-dw)/2,y+(h-dh)/2,dw,dh); }
+function _wrap(c,txt,x,y,maxw,lh,maxlines){ const ws=txt.split(' '); let line='',ln=0; for(let k=0;k<ws.length;k++){ const t=line?line+' '+ws[k]:ws[k]; if(c.measureText(t).width>maxw && line){ c.fillText(line,x,y); y+=lh; line=ws[k]; if(++ln>=maxlines-1){ let rest=ws.slice(k).join(' '); while(c.measureText(rest+'...').width>maxw && rest.length>3) rest=rest.slice(0,-1); c.fillText(rest+'...',x,y); return; } } else line=t; } c.fillText(line,x,y); }
+
+async function cotizacionCanvas(){
+  const keys=Object.keys(cart), imgs={};
+  await Promise.all(keys.map(async i=>{ if(PROD[i].img) imgs[i]=await _loadImg(PROD[i].img); }));
+  const top=160, rowH=80, foot=120;
+  const cv=document.createElement('canvas'); cv.width=820; cv.height=top+keys.length*rowH+foot;
+  const c=cv.getContext('2d');
+  c.fillStyle='#fff'; c.fillRect(0,0,cv.width,cv.height);
+  c.fillStyle='#0B1F33'; c.fillRect(0,0,cv.width,112);
+  c.textBaseline='alphabetic';
+  c.font='bold 34px Arial'; c.fillStyle='#fff'; c.fillText('Jeiperd',30,54);
+  const wj=c.measureText('Jeiperd').width; c.fillStyle='#02d1f7'; c.fillText('Store',30+wj,54);
+  c.textAlign='right'; c.font='bold 22px Arial'; c.fillStyle='#fff'; c.fillText('COTIZACION',792,46); c.textAlign='left';
+  const fecha=new Date().toLocaleDateString('es-DO'); const folio='JS-'+String(Date.now()).slice(-6);
+  c.font='13px Arial'; c.fillStyle='#cfe3f5'; c.fillText('Fecha: '+fecha+'     Folio: '+folio,30,90);
+  c.fillStyle='#16263a'; c.font='13px Arial';
+  c.fillText(usuario?('Cliente: '+(usuario.nombre||'')+'   Tel: '+(usuario.telefono||'')+'   '+(usuario.direccion||'')):'Cliente: (se completa al confirmar por WhatsApp)',30,140);
+  c.textBaseline='middle';
+  keys.forEach((i,idx)=>{ const p=PROD[i], ry=top+idx*rowH;
+    c.strokeStyle='#e2e9f1'; c.beginPath(); c.moveTo(20,ry); c.lineTo(800,ry); c.stroke();
+    c.fillStyle='#f6f9fc'; c.fillRect(26,ry+10,60,60); if(imgs[i]) _contain(c,imgs[i],26,ry+10,60,60);
+    c.fillStyle='#16263a'; c.font='14px Arial'; _wrap(c,p.n,102,ry+28,470,18,2);
+    c.fillStyle='#6b7c8f'; c.font='13px Arial'; c.fillText('Cantidad: '+cart[i]+'   x   '+money(p.pv),102,ry+60);
+    c.fillStyle='#0A4D8C'; c.font='bold 15px Arial'; c.textAlign='right'; c.fillText(money((p.pv||0)*cart[i]),794,ry+40); c.textAlign='left';
+  });
+  const ty=top+keys.length*rowH+8;
+  c.strokeStyle='#0B1F33'; c.lineWidth=2; c.beginPath(); c.moveTo(20,ty); c.lineTo(800,ty); c.stroke(); c.lineWidth=1;
+  c.fillStyle='#16263a'; c.font='bold 20px Arial'; c.fillText('TOTAL',30,ty+34);
+  c.textAlign='right'; c.fillStyle='#0A4D8C'; c.font='bold 24px Arial'; c.fillText(money(totalCart()),794,ty+36); c.textAlign='left';
+  c.fillStyle='#6b7c8f'; c.font='12px Arial'; c.textBaseline='alphabetic'; c.fillText('* El envio (RD$200-350) se suma segun la zona. Pago: transferencia o tarjeta.',30,ty+62);
+  c.fillStyle='#0B1F33'; c.fillRect(0,cv.height-42,cv.width,42);
+  c.fillStyle='#fff'; c.font='13px Arial'; c.textAlign='center';
+  c.fillText('JeiperdStore  -  WhatsApp '+CFG.whatsapp_show+'  -  De todo y para todos',cv.width/2,cv.height-16); c.textAlign='left';
+  return cv;
+}
+
+function _msgPedido(plano){
+  const nl = plano?'\n':'%0A'; const keys=Object.keys(cart);
+  let m='Hola '+CFG.marca+CFG.marca2+', quiero hacer este pedido:'+nl+nl;
+  keys.forEach(i=>{ const p=PROD[i]; m+='- '+p.n+' (x'+cart[i]+') = '+money((p.pv||0)*cart[i])+nl; });
+  m+=nl+'Total productos: '+money(totalCart())+nl+'(El envio se suma segun mi zona)'+nl+nl;
+  m+='Mi nombre: '+(usuario?usuario.nombre||'':'')+nl+'Mi telefono: '+(usuario?usuario.telefono||'':'')+nl+'Mi direccion/zona: '+(usuario?usuario.direccion||'':'');
+  return plano?m:m.split(' ').join('%20');
+}
+
+async function checkout(){
+  const keys=Object.keys(cart);
   if(keys.length===0){ toast('Tu carrito esta vacio'); return; }
-  let msg='Hola '+CFG.marca+CFG.marca2+', quiero hacer este pedido:%0A%0A';
-  keys.forEach(i=>{ const p=PROD[i]; msg+='- '+p.n+' (x'+cart[i]+') = '+money((p.pv||0)*cart[i])+'%0A'; });
-  const _n = usuario ? encodeURIComponent(usuario.nombre||'') : '';
-  const _d = usuario ? encodeURIComponent(usuario.direccion||'') : '';
-  const _t = usuario ? encodeURIComponent(usuario.telefono||'') : '';
-  msg+='%0ATotal productos: '+money(totalCart())+'%0A(El envio se suma segun mi zona)%0A%0AMi nombre: '+_n+'%0AMi telefono: '+_t+'%0AMi direccion/zona: '+_d;
-  window.open('https://wa.me/'+CFG.whatsapp+'?text='+msg,'_blank'); }
+  toast('Preparando tu cotizacion...');
+  const textoURL=encodeURIComponent(_msgPedido(true));
+  const waURL='https://wa.me/'+CFG.whatsapp+'?text='+textoURL;
+  let cv=null; try{ cv=await cotizacionCanvas(); }catch(e){ cv=null; }
+  if(!cv){ window.open(waURL,'_blank'); return; }
+  cv.toBlob(async (blob)=>{
+    const file=new File([blob],'cotizacion-jeiperdstore.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], text:_msgPedido(true)}); return; }catch(e){}
+    }
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cotizacion-jeiperdstore.png'; document.body.appendChild(a); a.click(); a.remove();
+    toast('Cotizacion descargada — adjuntala en WhatsApp');
+    setTimeout(()=>window.open(waURL,'_blank'),900);
+  },'image/png');
+}
 function compartir(i){ const p=PROD[i], txt=p.n+' - '+money(p.pv)+' en '+CFG.marca+CFG.marca2;
   if(navigator.share){ navigator.share({title:CFG.marca+CFG.marca2,text:txt}).catch(()=>{}); }
   else{ window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank'); } }
