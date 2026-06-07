@@ -1,15 +1,12 @@
 name: Actualizar y publicar tienda JeiperdShop
 
 on:
-  schedule:
-    # 16:00 UTC = 12:00 PM en Republica Dominicana (UTC-4)
-    - cron: '0 16 * * *'
+  # NOTA: el scraping desde la nube NO funciona porque Cloudflare bloquea la API
+  # /wp-json desde IPs de servidores (probado con requests y con navegador real).
+  # La actualizacion real la hace el robot LOCAL (robot_actualizar.py) que corre
+  # en la PC del usuario (IP de confianza) y hace git push. Este flujo queda solo
+  # en modo manual por si se necesita en el futuro.
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'index.html'
-      - 'build.log'
 
 permissions:
   contents: write
