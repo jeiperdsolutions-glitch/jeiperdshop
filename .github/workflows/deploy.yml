@@ -33,11 +33,15 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
+      - name: Instalar navegador (Playwright Chromium)
+        run: python -m playwright install --with-deps chromium
+
       - name: Generar la tienda (con registro)
         run: |
           cd scripts
           set +e
-          python extraer_portatilshop.py 2>&1 | tee ../build.log
+          python solve_cloudflare.py 2>&1 | tee ../build.log
+          python extraer_portatilshop.py 2>&1 | tee -a ../build.log
           EXTRAER=${PIPESTATUS[0]}
           echo "=== extraer exit: $EXTRAER ===" | tee -a ../build.log
           if [ "$EXTRAER" -eq 0 ]; then

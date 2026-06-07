@@ -73,15 +73,41 @@ def nombre_archivo_seguro(s):
     return re.sub(r"[^A-Za-z0-9_.-]", "_", str(s))[:80]
 
 
+def _cargar_cookies_cf(sesion):
+    """Si existe cf_cookies.json (creado por solve_cloudflare.py con Playwright),
+    usa esas cookies + User-Agent para pasar el reto de Cloudflare (entorno nube)."""
+    import json
+    ruta = os.path.join(CARPETA, "cf_cookies.json")
+    if not os.path.exists(ruta):
+        return False
+    try:
+        data = json.load(open(ruta, encoding="utf-8"))
+        if data.get("ua"):
+            sesion.headers["User-Agent"] = data["ua"]
+        n = 0
+        for c in data.get("cookies", []):
+            sesion.cookies.set(c["name"], c["value"],
+                               domain=c.get("domain", "portatilshoprd.com"),
+                               path=c.get("path", "/"))
+            n += 1
+        print(f"  (Cloudflare: cargadas {n} cookies del navegador)")
+        return True
+    except Exception as e:
+        print(f"  (no pude cargar cf_cookies.json: {e})")
+        return False
+
+
 def bajar_todos():
     sesion = requests.Session()
     sesion.headers.update(HEADERS)
-    # "Primar" la sesion: visitar la web primero para tomar cookies de Cloudflare
-    try:
-        sesion.get("https://portatilshoprd.com/", timeout=30)
-        time.sleep(1)
-    except Exception:
-        pass
+    uso_cf = _cargar_cookies_cf(sesion)
+    # Si no hay cookies de navegador, "primar" visitando la web (sirve desde IP residencial)
+    if not uso_cf:
+        try:
+            sesion.get("https://portatilshoprd.com/", timeout=30)
+            time.sleep(1)
+        except Exception:
+            pass
     productos = []
     pagina = 1
     while True:
