@@ -21,7 +21,20 @@ from openpyxl.styles import Font, PatternFill, Alignment
 BASE = "https://portatilshoprd.com/wp-json/wc/store/v1/products"
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/120.0 Safari/537.36")
-HEADERS = {"User-Agent": UA, "Accept": "application/json"}
+HEADERS = {
+    "User-Agent": UA,
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "es-DO,es;q=0.9,en;q=0.8",
+    "Referer": "https://portatilshoprd.com/tienda/",
+    "Origin": "https://portatilshoprd.com",
+    "Connection": "keep-alive",
+    "sec-ch-ua": '"Chromium";v="123", "Not:A-Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
+}
 
 CARPETA = os.path.dirname(os.path.abspath(__file__))
 HOY = datetime.date.today().isoformat()
@@ -63,14 +76,23 @@ def nombre_archivo_seguro(s):
 def bajar_todos():
     sesion = requests.Session()
     sesion.headers.update(HEADERS)
+    # "Primar" la sesion: visitar la web primero para tomar cookies de Cloudflare
+    try:
+        sesion.get("https://portatilshoprd.com/", timeout=30)
+        time.sleep(1)
+    except Exception:
+        pass
     productos = []
     pagina = 1
     while True:
         r = sesion.get(BASE, params={"per_page": PER_PAGE, "page": pagina}, timeout=30)
         if r.status_code != 200:
             print(f"  ! pagina {pagina} devolvio {r.status_code}, reintentando...")
-            time.sleep(3)
+            time.sleep(5)
             r = sesion.get(BASE, params={"per_page": PER_PAGE, "page": pagina}, timeout=30)
+        if r.status_code != 200:
+            raise SystemExit(f"Cloudflare bloqueo la peticion (HTTP {r.status_code}). "
+                             f"Primeros 200 chars: {r.text[:200]!r}")
         lote = r.json()
         if not lote:
             break
