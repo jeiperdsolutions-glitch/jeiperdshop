@@ -16,7 +16,7 @@ gtag('js',new Date());gtag('config','G-DS7FN4BWDP');
 document.addEventListener('click',function(ev){try{var a=ev.target&&ev.target.closest&&ev.target.closest('a[href*="wa.me"],a[href*="whatsapp"]');if(a&&window.gtag){gtag('event','whatsapp_click',{link_url:a.href});}}catch(e){}},true);})();
 </script>
 <title>JeiperdStore - De todo y para todos | RD</title>
-<meta name="description" content="JeiperdStore: tienda online en Republica Dominicana con mas de 1,800 productos - accesorios de celular, electronica, hogar, camaras y relojes inteligentes. Pedidos faciles por WhatsApp.">
+<meta name="description" content="JeiperdStore: tienda online en Republica Dominicana con mas de 2,200 productos - accesorios de celular, electronica, hogar, camaras y relojes inteligentes. Pedidos faciles por WhatsApp.">
 <meta name="keywords" content="tienda online Republica Dominicana, JeiperdStore, accesorios de celular RD, electronica Republica Dominicana, comprar en RD, cargadores, camaras, relojes inteligentes, domotica, ofertas RD$">
 <meta name="robots" content="index,follow">
 <meta name="author" content="JeiperdStore">
@@ -24,15 +24,15 @@ document.addEventListener('click',function(ev){try{var a=ev.target&&ev.target.cl
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="JeiperdStore">
 <meta property="og:title" content="JeiperdStore - De todo y para todos | RD">
-<meta property="og:description" content="Tienda online en Republica Dominicana con mas de 1,800 productos. Pedidos por WhatsApp.">
+<meta property="og:description" content="Tienda online en Republica Dominicana con mas de 2,200 productos. Pedidos por WhatsApp.">
 <meta property="og:url" content="https://jeiperdsolutions-glitch.github.io/jeiperdshop/">
 <meta property="og:image" content="https://jeiperdsolutions-glitch.github.io/jeiperdshop/og-image.png">
 <meta property="og:locale" content="es_DO">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="JeiperdStore - De todo y para todos | RD">
-<meta name="twitter:description" content="Tienda online en Republica Dominicana con mas de 1,800 productos. Pedidos por WhatsApp.">
+<meta name="twitter:description" content="Tienda online en Republica Dominicana con mas de 2,200 productos. Pedidos por WhatsApp.">
 <meta name="twitter:image" content="https://jeiperdsolutions-glitch.github.io/jeiperdshop/og-image.png">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"OnlineStore","name":"JeiperdStore","description":"Tienda online en Republica Dominicana con mas de 1,800 productos.","url":"https://jeiperdsolutions-glitch.github.io/jeiperdshop/","telephone":"+1-809-792-5406","priceRange":"RD$150 - RD$47,499","currenciesAccepted":"DOP","areaServed":{"@type":"Country","name":"Republica Dominicana"},"contactPoint":{"@type":"ContactPoint","contactType":"sales","telephone":"+18097925406","availableLanguage":"Spanish"},"sameAs":["https://wa.me/18097925406"]},{"@type":"WebSite","name":"JeiperdStore","url":"https://jeiperdsolutions-glitch.github.io/jeiperdshop/","inLanguage":"es-DO"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"OnlineStore","name":"JeiperdStore","description":"Tienda online en Republica Dominicana con mas de 2,200 productos.","url":"https://jeiperdsolutions-glitch.github.io/jeiperdshop/","telephone":"+1-809-792-5406","priceRange":"RD$150 - RD$47,499","currenciesAccepted":"DOP","areaServed":{"@type":"Country","name":"Republica Dominicana"},"contactPoint":{"@type":"ContactPoint","contactType":"sales","telephone":"+18097925406","availableLanguage":"Spanish"},"sameAs":["https://wa.me/18097925406"]},{"@type":"WebSite","name":"JeiperdStore","url":"https://jeiperdsolutions-glitch.github.io/jeiperdshop/","inLanguage":"es-DO"}]}</script>
 <style>
   :root{
     --primario:#0A4D8C; --primario2:#0c5ba8; --acento:#00B4D8; --acento2:#02d1f7; --oscuro:#0B1F33;
@@ -502,7 +502,7 @@ function render(){
   lote.forEach(i=>{ const p=PROD[i];
     const badge=p.d?'<div class="badge">-'+p.d+'</div>':'';
     const viejo=p.pa?'<span class="pviejo">'+money(p.pa)+'</span>':'';
-    const img=p.img?'<img loading="lazy" src="'+p.img+'">':'<div style="color:#bbb">sin foto</div>';
+    const img=p.img?'<img loading="lazy" alt="'+(p.n||'').replace(/"/g,'&quot;')+'" src="'+p.img+'">':'<div style="color:#bbb">sin foto</div>';
     const stock=p.stock?'':'<div class="nostock">Agotado</div>';
     const d=document.createElement('div');
     d.className='card'; d.onclick=()=>verProducto(i);
@@ -523,7 +523,7 @@ function verProducto(i){
   const p=PROD[i];
   const badge=p.d?'<div class="badge">-'+p.d+'</div>':'';
   const viejo=p.pa?'<span class="pviejo">'+money(p.pa)+'</span>':'';
-  const img=p.img?'<img onclick="this.classList.toggle(\'zoom\')" src="'+p.img+'">':'<div style="color:#bbb">sin foto</div>';
+  const img=p.img?'<img onclick="this.classList.toggle(\'zoom\')" alt="'+(p.n||'').replace(/"/g,'&quot;')+'" src="'+p.img+'">':'<div style="color:#bbb">sin foto</div>';
   const desc=p.desc?'<div class="mdesc">'+p.desc+'</div>':'';
   const stock=p.stock?'':'<div class="nostock">Producto agotado</div>';
   document.getElementById('modal').innerHTML=
@@ -547,7 +547,7 @@ function relacionados(i){
     if(q.img && q.cat.some(c=>p.cat.includes(c))) out.push(j); }
   if(!out.length) return '';
   return '<div class="rel"><h4>Productos relacionados</h4><div class="relrow">'+
-    out.map(j=>'<div class="relc" onclick="verProducto('+j+')"><img src="'+PROD[j].img+'"><div class="relp">'+money(PROD[j].pv)+'</div></div>').join('')+'</div></div>';
+    out.map(j=>'<div class="relc" onclick="verProducto('+j+')"><img alt="'+(PROD[j].n||'').replace(/"/g,'&quot;')+'" src="'+PROD[j].img+'"><div class="relp">'+money(PROD[j].pv)+'</div></div>').join('')+'</div></div>';
 }
 function chgQ(n){ const e=document.getElementById('mq'); e.value=Math.max(1,(+e.value)+n); }
 function cerrarModal(){ document.getElementById('overlay').classList.remove('open'); document.getElementById('modal').classList.remove('open'); }
@@ -574,7 +574,7 @@ function refrescaCarrito(){
   const cont=document.getElementById('ditems'), keys=Object.keys(cart);
   if(keys.length===0){ cont.innerHTML='<div class="dempty">Tu carrito esta vacio.<br>Agrega productos para pedir por WhatsApp.</div>'; }
   else{ cont.innerHTML=keys.map(i=>{ const p=PROD[i]; return '<div class="ditem">'+
-      (p.img?'<img src="'+p.img+'">':'')+'<div style="flex:1"><div class="it-n">'+p.n+'</div>'+
+      (p.img?'<img alt="'+(p.n||'').replace(/"/g,'&quot;')+'" src="'+p.img+'">':'')+'<div style="flex:1"><div class="it-n">'+p.n+'</div>'+
       '<div class="it-p">'+money(p.pv)+'</div><div class="it-q">'+
       '<button onclick="quita('+i+')">-</button>'+cart[i]+'<button onclick="sumaCart('+i+')">+</button>'+
       '<button class="it-del" onclick="borra('+i+')" title="Quitar">&times;</button></div></div></div>'; }).join(''); }
@@ -622,7 +622,7 @@ function initBanner(){
   deals.sort((a,b)=>(parseInt(PROD[b].d)||0)-(parseInt(PROD[a].d)||0)); deals=deals.slice(0,8);
   if(!deals.length){ document.getElementById('banner').style.display='none'; return; }
   const slides=deals.map(i=>{ const p=PROD[i]; return '<div class="slide" onclick="verProducto('+i+')">'+
-    '<img src="'+p.img+'"><div class="sinfo"><span class="stag">OFERTA -'+p.d+'</span>'+
+    '<img alt="'+(p.n||'').replace(/"/g,'&quot;')+'" src="'+p.img+'"><div class="sinfo"><span class="stag">OFERTA -'+p.d+'</span>'+
     '<h3>'+p.n+'</h3><div class="sprice">'+money(p.pv)+' <s>'+money(p.pa)+'</s></div>'+
     '<button class="btn">Ver oferta</button></div></div>'; }).join('');
   const dots=deals.map((_,k)=>'<span class="dot'+(k===0?' on':'')+'" onclick="event.stopPropagation();goSlide('+k+')"></span>').join('');
