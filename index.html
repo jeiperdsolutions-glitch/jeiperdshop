@@ -599,7 +599,7 @@ function _msgPedido(plano){
 }
 
 function _linkPedido(){
-  const items=Object.keys(cart).map(i=>[PROD[i].sku||'', cart[i], PROD[i].pv||0, PROD[i].n||'', PROD[i].img||'']);
+  const items=Object.keys(cart).map(i=>[+i, cart[i], PROD[i].pv||0]);
   const o={i:items, c: usuario?{n:usuario.nombre||'',t:usuario.telefono||'',d:usuario.direccion||''}:{}};
   let b=btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   const dir=location.origin+location.pathname.replace(/[^/]*$/,'');

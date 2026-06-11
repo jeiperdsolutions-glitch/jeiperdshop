@@ -61,11 +61,13 @@ async function render(){
   const o=decodif();
   const doc=document.getElementById('doc');
   if(!o || !o.i || !o.i.length){ doc.innerHTML='<div class="vacio">No se pudo leer el pedido.</div>'; return; }
-  // El link ya trae nombre (it[3]) e imagen (it[4]) embebidos -> funciona para TODOS los productos.
-  // feed_meta.csv queda solo como respaldo para links viejos.
+  // Catálogo mínimo [nombre, img] por índice -> link cortito.
+  let MIN=[];
+  try{ MIN = await (await fetch('catalogo_min.json',{cache:'no-store'})).json(); }catch(e){}
+  // feed_meta.csv solo como respaldo para links viejos (por SKU).
   let cat={};
-  const faltanDatos = o.i.some(it=>!it[3] || !it[4]);
-  if(faltanDatos){
+  const necesitaFeed = o.i.some(it=>typeof it[0]==='string' && it[0] && !it[3]);
+  if(necesitaFeed){
     try{
       const txt=await (await fetch('feed_meta.csv',{cache:'no-store'})).text();
       const rows=parseCSV(txt); const H={}; rows[0].forEach((h,k)=>H[h.trim()]=k);
@@ -75,9 +77,11 @@ async function render(){
   const fecha=new Date().toLocaleDateString('es-DO');
   const folio='JS-'+location.hash.replace(/\W/g,'').slice(-6).toUpperCase();
   let total=0, filas='';
-  o.i.forEach(it=>{ const sku=it[0], qty=it[1], pv=it[2]; const info=cat[sku]||{};
-    const nombre = it[3] || info.t || sku || 'Producto';
-    const imgUrl = it[4] || info.img || '';
+  o.i.forEach(it=>{ const ref=it[0], qty=it[1], pv=it[2];
+    let nombre = it[3] || '', imgUrl = it[4] || '';
+    if(!nombre && typeof ref==='number' && MIN[ref]){ nombre=MIN[ref][0]; imgUrl=imgUrl||MIN[ref][1]; }
+    if(!nombre && cat[ref]){ nombre=cat[ref].t; imgUrl=imgUrl||cat[ref].img; }
+    if(!nombre) nombre='Producto';
     const sub=qty*pv; total+=sub;
     const img=imgUrl?('<img src="'+esc(imgUrl)+'" alt="" loading="lazy">'):'<div style="width:66px;height:66px;background:#f0f4f8;border-radius:8px"></div>';
     filas+='<div class="item">'+img+'<div class="n">'+esc(nombre)+'<div class="q">Cantidad: '+qty+'  ×  '+money(pv)+'</div></div><div class="s">'+money(sub)+'</div></div>';
