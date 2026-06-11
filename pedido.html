@@ -40,6 +40,7 @@
   </div>
 <script>
 function money(v){ return 'RD$ '+Number(v||0).toLocaleString('es-DO'); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 function parseCSV(t){
   const rows=[]; let i=0,f='',row=[],q=false;
   while(i<t.length){ const c=t[i];
@@ -60,23 +61,29 @@ async function render(){
   const o=decodif();
   const doc=document.getElementById('doc');
   if(!o || !o.i || !o.i.length){ doc.innerHTML='<div class="vacio">No se pudo leer el pedido.</div>'; return; }
-  // catalogo (para nombre + foto) desde el feed publico
+  // El link ya trae nombre (it[3]) e imagen (it[4]) embebidos -> funciona para TODOS los productos.
+  // feed_meta.csv queda solo como respaldo para links viejos.
   let cat={};
-  try{
-    const txt=await (await fetch('feed_meta.csv',{cache:'no-store'})).text();
-    const rows=parseCSV(txt); const H={}; rows[0].forEach((h,k)=>H[h.trim()]=k);
-    for(let r=1;r<rows.length;r++){ const id=rows[r][H['id']]; if(id) cat[id]={t:rows[r][H['title']],img:rows[r][H['image_link']]}; }
-  }catch(e){}
+  const faltanDatos = o.i.some(it=>!it[3] || !it[4]);
+  if(faltanDatos){
+    try{
+      const txt=await (await fetch('feed_meta.csv',{cache:'no-store'})).text();
+      const rows=parseCSV(txt); const H={}; rows[0].forEach((h,k)=>H[h.trim()]=k);
+      for(let r=1;r<rows.length;r++){ const id=rows[r][H['id']]; if(id) cat[id]={t:rows[r][H['title']],img:rows[r][H['image_link']]}; }
+    }catch(e){}
+  }
   const fecha=new Date().toLocaleDateString('es-DO');
   const folio='JS-'+location.hash.replace(/\W/g,'').slice(-6).toUpperCase();
   let total=0, filas='';
   o.i.forEach(it=>{ const sku=it[0], qty=it[1], pv=it[2]; const info=cat[sku]||{};
+    const nombre = it[3] || info.t || sku || 'Producto';
+    const imgUrl = it[4] || info.img || '';
     const sub=qty*pv; total+=sub;
-    const img=info.img?('<img src="'+info.img+'" alt="">'):'<div style="width:66px;height:66px;background:#f0f4f8;border-radius:8px"></div>';
-    filas+='<div class="item">'+img+'<div class="n">'+(info.t||sku)+'<div class="q">Cantidad: '+qty+'  ×  '+money(pv)+'</div></div><div class="s">'+money(sub)+'</div></div>';
+    const img=imgUrl?('<img src="'+esc(imgUrl)+'" alt="" loading="lazy">'):'<div style="width:66px;height:66px;background:#f0f4f8;border-radius:8px"></div>';
+    filas+='<div class="item">'+img+'<div class="n">'+esc(nombre)+'<div class="q">Cantidad: '+qty+'  ×  '+money(pv)+'</div></div><div class="s">'+money(sub)+'</div></div>';
   });
   const c=o.c||{};
-  const cli='<b>Cliente:</b> '+(c.n||'(sin nombre)')+' &nbsp; <b>Tel:</b> '+(c.t||'-')+'<br><b>Dirección/zona:</b> '+(c.d||'-');
+  const cli='<b>Cliente:</b> '+esc(c.n||'(sin nombre)')+' &nbsp; <b>Tel:</b> '+esc(c.t||'-')+'<br><b>Dirección/zona:</b> '+esc(c.d||'-');
   doc.innerHTML=
     '<div class="top"><div class="logo">Jeiperd<span>Store</span></div>'+
       '<div class="r"><b>PEDIDO</b><small>Fecha: '+fecha+'</small><small>Folio: '+folio+'</small></div></div>'+
